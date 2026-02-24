@@ -1,0 +1,75 @@
+package com.example.content_calendar.controllers;
+
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.content_calendar.DTO.author.AuthorResponseDTO;
+import com.example.content_calendar.DTO.content.ContentResponseDTO;
+import com.example.content_calendar.DTO.user.UserLoginDTO;
+import com.example.content_calendar.DTO.user.UserRegisterDTO;
+import com.example.content_calendar.DTO.user.UserResponseDTO;
+import com.example.content_calendar.service.UserService;
+
+@RestController
+@RequestMapping("/api/users")
+@CrossOrigin(origins = "*")
+public class UserController {
+
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+
+    // POST /api/users/register
+    @PostMapping("/register")
+    public ResponseEntity<UserResponseDTO> register(@RequestBody UserRegisterDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.register(dto));
+    }
+
+    // POST /api/users/login
+    @PostMapping("/login")
+    public ResponseEntity<UserResponseDTO> login(@RequestBody UserLoginDTO dto) {
+        return ResponseEntity.ok(userService.login(dto));
+    }
+
+    // GET /api/users/{userId}
+    @GetMapping("/{userId}")
+    public ResponseEntity<UserResponseDTO> getUser(@PathVariable String userId) {
+        return ResponseEntity.ok(userService.getUserById(userId));
+    }
+
+    // POST /api/users/{userId}/subscribe/{authorId}
+    @PostMapping("/{userId}/subscribe/{authorId}")
+    public ResponseEntity<UserResponseDTO> subscribe(@PathVariable String userId, @PathVariable String authorId) {
+        return ResponseEntity.ok(userService.subscribe(userId, authorId));
+    }
+
+    // DELETE /api/users/{userId}/subscribe/{authorId}
+    @DeleteMapping("/{userId}/subscribe/{authorId}")
+    public ResponseEntity<UserResponseDTO> unsubscribe(@PathVariable String userId, @PathVariable String authorId) {
+        return ResponseEntity.ok(userService.unsubscribe(userId, authorId));
+    }
+
+    // GET /api/users/{userId}/subscriptions
+    @GetMapping("/{userId}/subscriptions")
+    public ResponseEntity<List<AuthorResponseDTO>> getSubscriptions(@PathVariable String userId) {
+        return ResponseEntity.ok(userService.getSubscriptions(userId));
+    }
+
+    // GET /api/users/{userId}/feed
+    @GetMapping("/{userId}/feed")
+    public ResponseEntity<List<ContentResponseDTO>> getFeed(@PathVariable String userId) {
+        return ResponseEntity.ok(userService.getFeed(userId));
+    }
+}
