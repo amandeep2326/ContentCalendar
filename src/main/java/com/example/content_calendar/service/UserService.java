@@ -1,10 +1,16 @@
 package com.example.content_calendar.service;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.example.content_calendar.DTO.auth.AuthResponseDTO;
 import com.example.content_calendar.DTO.author.AuthorResponseDTO;
 import com.example.content_calendar.DTO.content.ContentResponseDTO;
 import com.example.content_calendar.DTO.user.UserLoginDTO;
@@ -12,6 +18,7 @@ import com.example.content_calendar.DTO.user.UserRegisterDTO;
 import com.example.content_calendar.DTO.user.UserResponseDTO;
 import com.example.content_calendar.ExceptionHandler.BadRequestException;
 import com.example.content_calendar.ExceptionHandler.ResourceNotFoundException;
+import com.example.content_calendar.SecurityConfig.JwtService;
 import com.example.content_calendar.mapper.AuthorMapper;
 import com.example.content_calendar.mapper.ContentMapper;
 import com.example.content_calendar.mapper.UserMapper;
@@ -31,33 +38,33 @@ public class UserService {
     private final UserMapper userMapper;
     private final AuthorMapper authorMapper;
     private final ContentMapper contentMapper;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
 
     public UserService(UserRepository userRepository,
                        AuthorRepository authorRepository,
                        ContentCollectionRepository contentRepository,
                        UserMapper userMapper,
                        AuthorMapper authorMapper,
-                       ContentMapper contentMapper) {
+                       ContentMapper contentMapper,
+                       PasswordEncoder passwordEncoder,
+                       JwtService jwtService,
+                       AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
         this.authorRepository = authorRepository;
         this.contentRepository = contentRepository;
         this.userMapper = userMapper;
         this.authorMapper = authorMapper;
         this.contentMapper = contentMapper;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+        this.authenticationManager = authenticationManager;
     }
 
     // --- Register ---
 
-    public UserResponseDTO register(UserRegisterDTO dto) {
-        if (dto.getUserName() == null || dto.getUserName().isBlank()) {
-            throw new BadRequestException("Username is required");
-        }
-        if (dto.getEmail() == null || dto.getEmail().isBlank()) {
-            throw new BadRequestException("Email is required");
-        }
-        if (dto.getPassword() == null || dto.getPassword().isBlank()) {
-            throw new BadRequestException("Password is required");
-        }
+    public AuthResponseDTO register(UserRegisterDTO dto) {
         if (userRepository.existsByEmail(dto.getEmail())) {
             throw new BadRequestException("Email already registered");
         }
@@ -66,24 +73,33 @@ public class UserService {
         }
 
         User user = userMapper.toEntity(dto);
-        // TODO: hash password when Spring Security is added
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setCreatedAt(LocalDateTime.now());
 
-        return userMapper.toResponseDTO(userRepository.save(user));
+        User saved = userRepository.save(user);
+
+        UserDetails userDetails = new org.springframework.security.core.userdetails.User(
+                saved.getEmail(), saved.getPassword(), Collections.emptyList());
+        String token = jwtService.generateToken(userDetails);
+
+        return new AuthResponseDTO(token, saved.getId(), saved.getUserName(), saved.getEmail());
     }
 
-    // --- Login (plain check — no JWT yet) ---
+    // --- Login ---
 
-    public UserResponseDTO login(UserLoginDTO dto) {
+    public AuthResponseDTO login(UserLoginDTO dto) {
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword())
+        );
+
         User user = userRepository.findByEmail(dto.getEmail())
-            .orElseThrow(() -> new ResourceNotFoundException("No account found with email: " + dto.getEmail()));
+                .orElseThrow(() -> new ResourceNotFoundException("No account found with email: " + dto.getEmail()));
 
-        // TODO: use PasswordEncoder.matches() when Spring Security is added
-        if (!user.getPassword().equals(dto.getPassword())) {
-            throw new BadRequestException("Invalid password");
-        }
+        UserDetails userDetails = new org.springframework.security.core.userdetails.User(
+                user.getEmail(), user.getPassword(), Collections.emptyList());
+        String token = jwtService.generateToken(userDetails);
 
-        return userMapper.toResponseDTO(user);
+        return new AuthResponseDTO(token, user.getId(), user.getUserName(), user.getEmail());
     }
 
     // --- Get profile ---

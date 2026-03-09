@@ -23,6 +23,8 @@ import com.example.content_calendar.model.Tags;
 import com.example.content_calendar.model.Type;
 import com.example.content_calendar.service.ContentService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/content")
 @CrossOrigin(origins = "*")
@@ -44,12 +46,12 @@ public class ContentController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<ContentResponseDTO> create(@RequestBody ContentRequestDTO contentRequest) {
+    public ResponseEntity<ContentResponseDTO> create(@Valid @RequestBody ContentRequestDTO contentRequest) {
         return ResponseEntity.status(HttpStatus.CREATED).body(contentService.save(contentRequest));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ContentResponseDTO> update(@RequestBody ContentRequestDTO contentRequest, @PathVariable String id) {
+    public ResponseEntity<ContentResponseDTO> update(@Valid @RequestBody ContentRequestDTO contentRequest, @PathVariable String id) {
         return ResponseEntity.ok(contentService.update(id, contentRequest));
     }
 

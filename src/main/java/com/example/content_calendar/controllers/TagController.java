@@ -19,6 +19,8 @@ import com.example.content_calendar.DTO.tag.TagRequestDTO;
 import com.example.content_calendar.DTO.tag.TagResponseDTO;
 import com.example.content_calendar.service.TagService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/tags")
 @CrossOrigin(origins = "*")
@@ -43,12 +45,12 @@ public class TagController {
     }
 
     @PostMapping("")
-    public ResponseEntity<TagResponseDTO> createTag(@RequestBody TagRequestDTO dto) {
+    public ResponseEntity<TagResponseDTO> createTag(@Valid @RequestBody TagRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(tagService.createTag(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TagResponseDTO> updateTag(@PathVariable String id, @RequestBody TagRequestDTO dto) {
+    public ResponseEntity<TagResponseDTO> updateTag(@PathVariable String id, @Valid @RequestBody TagRequestDTO dto) {
         return ResponseEntity.ok(tagService.updateTag(id, dto));
     }
 

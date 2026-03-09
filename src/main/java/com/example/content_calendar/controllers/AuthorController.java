@@ -21,6 +21,8 @@ import com.example.content_calendar.DTO.tag.TagResponseDTO;
 import com.example.content_calendar.DTO.user.UserResponseDTO;
 import com.example.content_calendar.service.AuthorService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/authors")
 @CrossOrigin(origins = "*")
@@ -45,12 +47,12 @@ public class AuthorController {
     }
 
     @PostMapping("")
-    public ResponseEntity<AuthorResponseDTO> createAuthor(@RequestBody AuthorRequestDTO dto) {
+    public ResponseEntity<AuthorResponseDTO> createAuthor(@Valid @RequestBody AuthorRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authorService.createAuthor(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<AuthorResponseDTO> updateAuthor(@PathVariable String id, @RequestBody AuthorRequestDTO dto) {
+    public ResponseEntity<AuthorResponseDTO> updateAuthor(@PathVariable String id, @Valid @RequestBody AuthorRequestDTO dto) {
         return ResponseEntity.ok(authorService.updateAuthor(id, dto));
     }
 
