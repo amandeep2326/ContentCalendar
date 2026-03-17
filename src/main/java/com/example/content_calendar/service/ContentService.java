@@ -15,6 +15,7 @@ import com.example.content_calendar.model.Content;
 import com.example.content_calendar.model.Status;
 import com.example.content_calendar.model.Tags;
 import com.example.content_calendar.model.Type;
+import com.example.content_calendar.model.User;
 import com.example.content_calendar.repository.*;
 
 @Service
@@ -22,25 +23,64 @@ public class ContentService {
     private final AuthorRepository authorRepository;
     private final ContentCollectionRepository contentRepository;
     private final TagRepository tagRepository;
+    private final UserRepository userRepository;
     private final ContentMapper contentMapper;
 
     public ContentService(AuthorRepository authorRepository,
                           ContentCollectionRepository contentRepository,
                           TagRepository tagRepository,
+                          UserRepository userRepository,
                           ContentMapper contentMapper) {
         this.authorRepository = authorRepository;
         this.contentRepository = contentRepository;
         this.tagRepository = tagRepository;
+        this.userRepository = userRepository;
         this.contentMapper = contentMapper;
     }
 
-    public List<ContentResponseDTO> getContents() {
-        return contentMapper.toListResponseDTOList(contentRepository.findAll());
+    // Returns free content only (for unauthenticated users)
+    public List<ContentResponseDTO> getFreeContents() {
+        return contentMapper.toListResponseDTOList(contentRepository.findByPremiumFalse());
     }
 
-    public ContentResponseDTO getContentById(String id) {
+    // Returns free content + premium content from subscribed authors (for authenticated users)
+    public List<ContentResponseDTO> getContentsForUser(String userId) {
+        User user = userRepository.findByIdWithSubscriptions(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        List<String> subscribedAuthorIds = user.getSubscribedAuthors().stream()
+            .map(Author::getId)
+            .toList();
+
+        List<Content> contents;
+        if (subscribedAuthorIds.isEmpty()) {
+            contents = contentRepository.findByPremiumFalse();
+        } else {
+            contents = contentRepository.findAccessibleContent(subscribedAuthorIds);
+        }
+        return contentMapper.toListResponseDTOList(contents);
+    }
+
+    // Single content by id — checks premium access
+    public ContentResponseDTO getContentById(String id, String userId) {
         Content content = contentRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Content not found with id: " + id));
+
+        if (content.isPremium()) {
+            if (userId == null) {
+                throw new BadRequestException("This is premium content. Please login and subscribe to the author to view it.");
+            }
+            User user = userRepository.findByIdWithSubscriptions(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+            boolean isSubscribed = user.getSubscribedAuthors().stream()
+                .anyMatch(a -> a.getId().equals(content.getAuthor().getId()));
+
+            if (!isSubscribed) {
+                throw new BadRequestException("This is premium content. Subscribe to author '" 
+                    + content.getAuthor().getName() + "' to access it.");
+            }
+        }
         return contentMapper.toResponseDTO(content);
     }
 
@@ -99,8 +139,17 @@ public class ContentService {
         return contentMapper.toResponseDTOList(contentRepository.findAllWithAuthorAndTags());
     }
 
-    public List<ContentResponseDTO> getContentsByAuthorId(String authorId) {
-        return contentMapper.toListResponseDTOList(contentRepository.findByAuthorId(authorId));
+    public List<ContentResponseDTO> getContentsByAuthorId(String authorId, String userId) {
+        boolean includePremium = false;
+        if (userId != null) {
+            User user = userRepository.findByIdWithSubscriptions(userId).orElse(null);
+            if (user != null) {
+                includePremium = user.getSubscribedAuthors().stream()
+                    .anyMatch(a -> a.getId().equals(authorId));
+            }
+        }
+        return contentMapper.toListResponseDTOList(
+            contentRepository.findByAuthorIdWithAccess(authorId, includePremium));
     }
 
     public List<Tags> getTagsByContentId(String contentId) {

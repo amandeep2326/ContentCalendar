@@ -21,4 +21,5 @@ public class ContentResponseDTO {
     private Status status;
     private String type;
     private Set<TagSummaryDTO> tags;
+    private boolean premium;
 }

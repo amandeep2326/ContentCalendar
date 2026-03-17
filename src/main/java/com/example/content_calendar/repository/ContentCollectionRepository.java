@@ -19,6 +19,17 @@ public interface ContentCollectionRepository extends JpaRepository<Content, Stri
 
     List<Content> findByType(Type type);
 
+    // All free (non-premium) content
+    List<Content> findByPremiumFalse();
+
+    // Free content + premium content from specific authors (subscribed)
+    @Query("SELECT c FROM Content c WHERE c.premium = false OR (c.premium = true AND c.author.id IN :authorIds)")
+    List<Content> findAccessibleContent(@Param("authorIds") List<String> authorIds);
+
+    // Free content by author + premium content by author (for subscribed users)
+    @Query("SELECT c FROM Content c WHERE c.author.id = :authorId AND (c.premium = false OR c.premium = :includePremium)")
+    List<Content> findByAuthorIdWithAccess(@Param("authorId") String authorId, @Param("includePremium") boolean includePremium);
+
     // JOIN: Find all content by a specific author name (Content JOIN Author)
     @Query("SELECT c FROM Content c JOIN c.author a WHERE a.name = :authorName")
     List<Content> findByAuthorName(@Param("authorName") String authorName);

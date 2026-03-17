@@ -1,6 +1,7 @@
 package com.example.content_calendar.SecurityConfig;
 
 import java.util.Date;
+import java.util.HashMap;
 
 import javax.crypto.SecretKey;
 
@@ -22,13 +23,21 @@ public class JwtService {
     @Value("${jwt.expiration}")
     private long jwtExpiration;
 
-    public String generateToken(UserDetails userDetails) {
+    public String generateToken(UserDetails userDetails, String role, String userId) {
+        HashMap<String, Object> claims = new HashMap<>();
+        claims.put("Role", role);
+        claims.put("userId", userId);
         return Jwts.builder()
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                .claims(claims)
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    public String extractUserId(String token) {
+        return extractAllClaims(token).get("userId", String.class);
     }
 
     public String extractUsername(String token) {
@@ -44,7 +53,7 @@ public class JwtService {
         return extractAllClaims(token).getExpiration().before(new Date());
     }
 
-    private Claims extractAllClaims(String token) {
+    public Claims extractAllClaims(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()

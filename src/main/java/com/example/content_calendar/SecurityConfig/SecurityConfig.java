@@ -2,6 +2,7 @@ package com.example.content_calendar.SecurityConfig;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -36,6 +37,8 @@ public class SecurityConfig {
                                 "/api/users/register",
                                 "/api/users/login"
                         ).permitAll()
+                        // Allow anonymous GET access to content listing/detail (free posts visible to all)
+                        .requestMatchers(HttpMethod.GET, "/api/content", "/api/content/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

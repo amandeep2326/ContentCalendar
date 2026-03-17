@@ -30,6 +30,10 @@ public class User {
 
     private LocalDateTime createdAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role = Role.USER;
+
     // A user CAN be an author (nullable — null means regular user)
     @OneToOne
     @JoinColumn(name = "author_id", unique = true)
@@ -43,4 +47,12 @@ public class User {
         inverseJoinColumns = @JoinColumn(name = "author_id")
     )
     private Set<Author> subscribedAuthors;
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
 }

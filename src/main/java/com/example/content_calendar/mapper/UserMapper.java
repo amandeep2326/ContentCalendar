@@ -31,6 +31,7 @@ public interface UserMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "author", ignore = true)
     @Mapping(target = "subscribedAuthors", ignore = true)
+    @Mapping(target = "role", ignore = true)
     User toEntity(UserRegisterDTO dto);
 
     @Named("hasAuthor")

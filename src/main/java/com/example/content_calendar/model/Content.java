@@ -33,6 +33,9 @@ public class Content {
     @Enumerated(EnumType.STRING)
     Type type;
 
+    @Column(nullable = false)
+    boolean premium = false; // false = free, true = premium (subscription required)
+
     @ManyToMany(cascade = CascadeType.MERGE)
     @JoinTable(
         name = "content_tags",
@@ -98,4 +101,11 @@ public class Content {
         this.tags = tags;
     }
 
+    public boolean isPremium() {
+        return premium;
+    }
+
+    public void setPremium(boolean premium) {
+        this.premium = premium;
+    }
 }

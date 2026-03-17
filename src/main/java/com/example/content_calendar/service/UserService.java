@@ -73,6 +73,7 @@ public class UserService {
         }
 
         User user = userMapper.toEntity(dto);
+        user.setRole(com.example.content_calendar.model.Role.USER);
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setCreatedAt(LocalDateTime.now());
 
@@ -80,7 +81,7 @@ public class UserService {
 
         UserDetails userDetails = new org.springframework.security.core.userdetails.User(
                 saved.getEmail(), saved.getPassword(), Collections.emptyList());
-        String token = jwtService.generateToken(userDetails);
+        String token = jwtService.generateToken(userDetails, saved.getRole().name(), saved.getId());
 
         return new AuthResponseDTO(token, saved.getId(), saved.getUserName(), saved.getEmail());
     }
@@ -97,7 +98,7 @@ public class UserService {
 
         UserDetails userDetails = new org.springframework.security.core.userdetails.User(
                 user.getEmail(), user.getPassword(), Collections.emptyList());
-        String token = jwtService.generateToken(userDetails);
+        String token = jwtService.generateToken(userDetails, user.getRole().name(), user.getId());
 
         return new AuthResponseDTO(token, user.getId(), user.getUserName(), user.getEmail());
     }

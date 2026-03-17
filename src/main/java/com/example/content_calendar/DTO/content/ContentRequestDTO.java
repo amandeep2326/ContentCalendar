@@ -39,4 +39,6 @@ public class ContentRequestDTO {
     private String type;
 
     private Set<String> tagIds;
+
+    private Boolean premium;
 }
