@@ -1,9 +1,5 @@
 package com.example.content_calendar.DTO.user;
 
-import java.util.List;
-
-import com.example.content_calendar.DTO.author.AuthorResponseDTO;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,5 +14,4 @@ public class UserResponseDTO {
     private String createdAt;
     private boolean author;
     private String authorId;
-    private List<AuthorResponseDTO> subscribedAuthors;
 }

@@ -2,7 +2,6 @@ package com.example.content_calendar.model;
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -35,11 +34,6 @@ public class Author  {
     @OneToOne(mappedBy = "author")
     @JsonIgnore
     private User user;
-
-    // All users who have subscribed to this author
-    @ManyToMany(mappedBy = "subscribedAuthors")
-    @JsonIgnore
-    private Set<User> subscribers;
 
 
 

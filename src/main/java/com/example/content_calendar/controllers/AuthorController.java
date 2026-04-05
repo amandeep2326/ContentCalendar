@@ -18,7 +18,6 @@ import com.example.content_calendar.DTO.author.AuthorRequestDTO;
 import com.example.content_calendar.DTO.author.AuthorResponseDTO;
 import com.example.content_calendar.DTO.content.ContentResponseDTO;
 import com.example.content_calendar.DTO.tag.TagResponseDTO;
-import com.example.content_calendar.DTO.user.UserResponseDTO;
 import com.example.content_calendar.service.AuthorService;
 
 import jakarta.validation.Valid;
@@ -72,10 +71,5 @@ public class AuthorController {
     @GetMapping("/{authorId}/tags")
     public ResponseEntity<List<TagResponseDTO>> getTagsByAuthorId(@PathVariable String authorId) {
         return ResponseEntity.ok(authorService.getTagsByAuthorId(authorId));
-    }
-
-    @GetMapping("/{authorId}/subscribers")
-    public ResponseEntity<List<UserResponseDTO>> getSubscribersByAuthorId(@PathVariable String authorId) {
-        return ResponseEntity.ok(authorService.getSubscribersByAuthorId(authorId));
     }
 }

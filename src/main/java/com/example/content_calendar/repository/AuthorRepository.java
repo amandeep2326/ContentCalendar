@@ -9,7 +9,6 @@ import org.springframework.data.repository.query.Param;
 import com.example.content_calendar.model.Author;
 import com.example.content_calendar.model.Content;
 import com.example.content_calendar.model.Tags;
-import com.example.content_calendar.model.User;
 
 public interface AuthorRepository extends JpaRepository<Author, String> {
 
@@ -23,8 +22,4 @@ public interface AuthorRepository extends JpaRepository<Author, String> {
     // JOIN: Get distinct tags an author has posted with (Content JOIN Tags via content_tags)
     @Query("SELECT DISTINCT t FROM Content c JOIN c.author a JOIN c.tags t WHERE a.id = :authorId")
     List<Tags> findTagsByAuthorId(@Param("authorId") String authorId);
-
-    // JOIN: Get all users subscribed to this author (User JOIN user_subscriptions)
-    @Query("SELECT u FROM User u JOIN u.subscribedAuthors a WHERE a.id = :authorId")
-    List<User> findSubscribersByAuthorId(@Param("authorId") String authorId);
 } 

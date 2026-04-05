@@ -20,12 +20,10 @@ public interface AuthorMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "followersCount", ignore = true)
     @Mapping(target = "user", ignore = true)
-    @Mapping(target = "subscribers", ignore = true)
     Author toEntity(AuthorRequestDTO dto);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "followersCount", ignore = true)
     @Mapping(target = "user", ignore = true)
-    @Mapping(target = "subscribers", ignore = true)
     void updateEntityFromDTO(AuthorRequestDTO dto, @MappingTarget Author author);
 }

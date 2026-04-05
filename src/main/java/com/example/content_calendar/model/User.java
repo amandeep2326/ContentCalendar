@@ -1,7 +1,6 @@
 package com.example.content_calendar.model;
 
 import java.time.LocalDateTime;
-import java.util.Set;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -38,15 +37,6 @@ public class User {
     @OneToOne
     @JoinColumn(name = "author_id", unique = true)
     private Author author;
-
-    // A user can subscribe to multiple authors
-    @ManyToMany
-    @JoinTable(
-        name = "user_subscriptions",
-        joinColumns = @JoinColumn(name = "user_id"),
-        inverseJoinColumns = @JoinColumn(name = "author_id")
-    )
-    private Set<Author> subscribedAuthors;
 
     public Role getRole() {
         return role;

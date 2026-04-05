@@ -8,15 +8,12 @@ import com.example.content_calendar.DTO.author.AuthorRequestDTO;
 import com.example.content_calendar.DTO.author.AuthorResponseDTO;
 import com.example.content_calendar.DTO.content.ContentResponseDTO;
 import com.example.content_calendar.DTO.tag.TagResponseDTO;
-import com.example.content_calendar.DTO.user.UserResponseDTO;
 import com.example.content_calendar.ExceptionHandler.BadRequestException;
 import com.example.content_calendar.ExceptionHandler.ResourceNotFoundException;
 import com.example.content_calendar.mapper.AuthorMapper;
 import com.example.content_calendar.mapper.ContentMapper;
 import com.example.content_calendar.mapper.TagMapper;
-import com.example.content_calendar.mapper.UserMapper;
 import com.example.content_calendar.model.Author;
-import com.example.content_calendar.model.User;
 import com.example.content_calendar.repository.AuthorRepository;
 
 @Service
@@ -26,18 +23,15 @@ public class AuthorService {
     private final AuthorMapper authorMapper;
     private final ContentMapper contentMapper;
     private final TagMapper tagMapper;
-    private final UserMapper userMapper;
 
     public AuthorService(AuthorRepository authorRepository,
                          AuthorMapper authorMapper,
                          ContentMapper contentMapper,
-                         TagMapper tagMapper,
-                         UserMapper userMapper) {
+                         TagMapper tagMapper) {
         this.authorRepository = authorRepository;
         this.authorMapper = authorMapper;
         this.contentMapper = contentMapper;
         this.tagMapper = tagMapper;
-        this.userMapper = userMapper;
     }
 
     // --- CRUD ---
@@ -85,14 +79,5 @@ public class AuthorService {
         authorRepository.findById(authorId)
             .orElseThrow(() -> new ResourceNotFoundException("Author not found with id: " + authorId));
         return tagMapper.toResponseDTOList(authorRepository.findTagsByAuthorId(authorId));
-    }
-
-    public List<UserResponseDTO> getSubscribersByAuthorId(String authorId) {
-        authorRepository.findById(authorId)
-            .orElseThrow(() -> new ResourceNotFoundException("Author not found with id: " + authorId));
-        List<User> subscribers = authorRepository.findSubscribersByAuthorId(authorId);
-        return subscribers.stream()
-            .map(userMapper::toResponseDTO)
-            .toList();
     }
 }
