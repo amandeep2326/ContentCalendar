@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.example.content_calendar.DTO.content.ContentRequestDTO;
@@ -42,12 +45,13 @@ public class ContentService {
     }
 
     // Returns free content only (for unauthenticated users)
-    public List<ContentResponseDTO> getFreeContents() {
-        return contentMapper.toListResponseDTOList(contentRepository.findByPremiumFalse());
+    public Page<ContentResponseDTO> getFreeContents(Pageable pageable) {
+        return contentRepository.findByPremiumFalse(pageable)
+                .map(contentMapper::toListResponseDTO);
     }
 
     // Returns free content + premium content from subscribed authors (for authenticated users)
-    public List<ContentResponseDTO> getContentsForUser(String userId) {
+    public Page<ContentResponseDTO> getContentsForUser(String userId, Pageable pageable) {
         userRepository.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
@@ -55,13 +59,13 @@ public class ContentService {
             .map(s -> s.getAuthor().getId())
             .toList();
 
-        List<Content> contents;
+        Page<Content> contents;
         if (subscribedAuthorIds.isEmpty()) {
-            contents = contentRepository.findByPremiumFalse();
+            contents = contentRepository.findByPremiumFalse(pageable);
         } else {
-            contents = contentRepository.findAccessibleContent(subscribedAuthorIds);
+            contents = contentRepository.findAccessibleContent(subscribedAuthorIds, pageable);
         }
-        return contentMapper.toListResponseDTOList(contents);
+        return contents.map(contentMapper::toListResponseDTO);
     }
 
     // Single content by id — checks premium access
@@ -118,37 +122,43 @@ public class ContentService {
 
     // --- Join query methods ---
 
-    public List<ContentResponseDTO> getContentsByStatus(Status status) {
-        return contentMapper.toListResponseDTOList(contentRepository.findByStatus(status));
+    public Page<ContentResponseDTO> getContentsByStatus(Status status, Pageable pageable) {
+        return contentRepository.findByStatus(status, pageable)
+                .map(contentMapper::toListResponseDTO);
     }
 
-    public List<ContentResponseDTO> getContentsByType(Type type) {
-        return contentMapper.toListResponseDTOList(contentRepository.findByType(type));
+    public Page<ContentResponseDTO> getContentsByType(Type type, Pageable pageable) {
+        return contentRepository.findByType(type, pageable)
+                .map(contentMapper::toListResponseDTO);
     }
 
-    public List<ContentResponseDTO> getContentsByAuthorName(String authorName) {
-        return contentMapper.toListResponseDTOList(contentRepository.findByAuthorName(authorName));
+    public Page<ContentResponseDTO> getContentsByAuthorName(String authorName, Pageable pageable) {
+        return contentRepository.findByAuthorName(authorName, pageable)
+                .map(contentMapper::toListResponseDTO);
     }
 
-    public List<ContentResponseDTO> getContentsByTagName(String tagName) {
-        return contentMapper.toListResponseDTOList(contentRepository.findByTagName(tagName));
+    public Page<ContentResponseDTO> getContentsByTagName(String tagName, Pageable pageable) {
+        return contentRepository.findByTagName(tagName, pageable)
+                .map(contentMapper::toListResponseDTO);
     }
 
-    public List<ContentResponseDTO> getContentsByStatusAndAuthor(Status status, String authorName) {
-        return contentMapper.toListResponseDTOList(contentRepository.findByStatusAndAuthorName(status, authorName));
+    public Page<ContentResponseDTO> getContentsByStatusAndAuthor(Status status, String authorName, Pageable pageable) {
+        return contentRepository.findByStatusAndAuthorName(status, authorName, pageable)
+                .map(contentMapper::toListResponseDTO);
     }
 
-    public List<ContentResponseDTO> getAllWithAuthorAndTags() {
-        return contentMapper.toResponseDTOList(contentRepository.findAllWithAuthorAndTags());
+    public Page<ContentResponseDTO> getAllWithAuthorAndTags(Pageable pageable) {
+        return contentRepository.findAllWithAuthorAndTags(pageable)
+                .map(contentMapper::toResponseDTO);
     }
 
-    public List<ContentResponseDTO> getContentsByAuthorId(String authorId, String userId) {
+    public Page<ContentResponseDTO> getContentsByAuthorId(String authorId, String userId, Pageable pageable) {
         boolean includePremium = false;
         if (userId != null) {
             includePremium = subscriptionRepository.existsByUserIdAndAuthorId(userId, authorId);
         }
-        return contentMapper.toListResponseDTOList(
-            contentRepository.findByAuthorIdWithAccess(authorId, includePremium));
+        return contentRepository.findByAuthorIdWithAccess(authorId, includePremium, pageable)
+                .map(contentMapper::toListResponseDTO);
     }
 
     public List<Tags> getTagsByContentId(String contentId) {

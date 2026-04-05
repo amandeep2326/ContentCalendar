@@ -2,6 +2,10 @@ package com.example.content_calendar.controllers;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -44,17 +48,19 @@ public class ContentController {
         this.jwtService = jwtService;
     }
 
-    // GET /api/content — returns free content for anonymous users, free + subscribed premium for authenticated
+    // GET /api/content?page=0&size=10&sort=publishedDate,desc
     @GetMapping("")
-    public ResponseEntity<List<ContentResponseDTO>> findAll(HttpServletRequest request) {
+    public ResponseEntity<Page<ContentResponseDTO>> findAll(
+            HttpServletRequest request,
+            @PageableDefault(size = 10, sort = "publishedDate", direction = Sort.Direction.DESC) Pageable pageable) {
         String userId = extractUserIdFromRequest(request);
         if (userId != null) {
-            return ResponseEntity.ok(contentService.getContentsForUser(userId));
+            return ResponseEntity.ok(contentService.getContentsForUser(userId, pageable));
         }
-        return ResponseEntity.ok(contentService.getFreeContents());
+        return ResponseEntity.ok(contentService.getFreeContents(pageable));
     }
 
-    // GET /api/content/{id} — premium content requires subscription
+    // GET /api/content/{id}
     @GetMapping("/{id}")
     public ResponseEntity<ContentResponseDTO> findById(@PathVariable String id, HttpServletRequest request) {
         String userId = extractUserIdFromRequest(request);
@@ -79,49 +85,62 @@ public class ContentController {
 
     // --- Join / Filter endpoints ---
 
-    // GET /api/content/filter/status?status=PLANNED
+    // GET /api/content/filter/status?status=PLANNED&page=0&size=10
     @GetMapping("/filter/status")
-    public ResponseEntity<List<ContentResponseDTO>> findByStatus(@RequestParam Status status) {
-        return ResponseEntity.ok(contentService.getContentsByStatus(status));
-    }
-
-    // GET /api/content/filter/type?type=ARTICLE
-    @GetMapping("/filter/type")
-    public ResponseEntity<List<ContentResponseDTO>> findByType(@RequestParam Type type) {
-        return ResponseEntity.ok(contentService.getContentsByType(type));
-    }
-
-    // JOIN: GET /api/content/filter/author?name=John
-    @GetMapping("/filter/author")
-    public ResponseEntity<List<ContentResponseDTO>> findByAuthorName(@RequestParam String name) {
-        return ResponseEntity.ok(contentService.getContentsByAuthorName(name));
-    }
-
-    // JOIN: GET /api/content/filter/tag?tagName=java
-    @GetMapping("/filter/tag")
-    public ResponseEntity<List<ContentResponseDTO>> findByTagName(@RequestParam String tagName) {
-        return ResponseEntity.ok(contentService.getContentsByTagName(tagName));
-    }
-
-    // JOIN: GET /api/content/filter/status-author?status=PLANNED&authorName=John
-    @GetMapping("/filter/status-author")
-    public ResponseEntity<List<ContentResponseDTO>> findByStatusAndAuthor(
+    public ResponseEntity<Page<ContentResponseDTO>> findByStatus(
             @RequestParam Status status,
-            @RequestParam String authorName) {
-        return ResponseEntity.ok(contentService.getContentsByStatusAndAuthor(status, authorName));
+            @PageableDefault(size = 10, sort = "publishedDate", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(contentService.getContentsByStatus(status, pageable));
     }
 
-    // FETCH JOIN: GET /api/content/with-details
+    // GET /api/content/filter/type?type=ARTICLE&page=0&size=10
+    @GetMapping("/filter/type")
+    public ResponseEntity<Page<ContentResponseDTO>> findByType(
+            @RequestParam Type type,
+            @PageableDefault(size = 10, sort = "publishedDate", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(contentService.getContentsByType(type, pageable));
+    }
+
+    // JOIN: GET /api/content/filter/author?name=John&page=0&size=10
+    @GetMapping("/filter/author")
+    public ResponseEntity<Page<ContentResponseDTO>> findByAuthorName(
+            @RequestParam String name,
+            @PageableDefault(size = 10, sort = "publishedDate", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(contentService.getContentsByAuthorName(name, pageable));
+    }
+
+    // JOIN: GET /api/content/filter/tag?tagName=java&page=0&size=10
+    @GetMapping("/filter/tag")
+    public ResponseEntity<Page<ContentResponseDTO>> findByTagName(
+            @RequestParam String tagName,
+            @PageableDefault(size = 10, sort = "publishedDate", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(contentService.getContentsByTagName(tagName, pageable));
+    }
+
+    // JOIN: GET /api/content/filter/status-author?status=PLANNED&authorName=John&page=0&size=10
+    @GetMapping("/filter/status-author")
+    public ResponseEntity<Page<ContentResponseDTO>> findByStatusAndAuthor(
+            @RequestParam Status status,
+            @RequestParam String authorName,
+            @PageableDefault(size = 10, sort = "publishedDate", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(contentService.getContentsByStatusAndAuthor(status, authorName, pageable));
+    }
+
+    // FETCH JOIN: GET /api/content/with-details?page=0&size=10
     @GetMapping("/with-details")
-    public ResponseEntity<List<ContentResponseDTO>> findAllWithDetails() {
-        return ResponseEntity.ok(contentService.getAllWithAuthorAndTags());
+    public ResponseEntity<Page<ContentResponseDTO>> findAllWithDetails(
+            @PageableDefault(size = 10, sort = "publishedDate", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(contentService.getAllWithAuthorAndTags(pageable));
     }
 
-    // JOIN: GET /api/content/by-author/{authorId} — subscription-aware
+    // JOIN: GET /api/content/by-author/{authorId}?page=0&size=10
     @GetMapping("/by-author/{authorId}")
-    public ResponseEntity<List<ContentResponseDTO>> findByAuthorId(@PathVariable String authorId, HttpServletRequest request) {
+    public ResponseEntity<Page<ContentResponseDTO>> findByAuthorId(
+            @PathVariable String authorId,
+            HttpServletRequest request,
+            @PageableDefault(size = 10, sort = "publishedDate", direction = Sort.Direction.DESC) Pageable pageable) {
         String userId = extractUserIdFromRequest(request);
-        return ResponseEntity.ok(contentService.getContentsByAuthorId(authorId, userId));
+        return ResponseEntity.ok(contentService.getContentsByAuthorId(authorId, userId, pageable));
     }
 
     // JOIN: GET /api/content/{contentId}/tags

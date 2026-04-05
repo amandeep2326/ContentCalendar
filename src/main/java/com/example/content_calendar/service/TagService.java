@@ -2,6 +2,8 @@ package com.example.content_calendar.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.example.content_calendar.DTO.content.ContentResponseDTO;
@@ -29,8 +31,9 @@ public class TagService {
 
     // --- CRUD ---
 
-    public List<TagResponseDTO> getAllTags() {
-        return tagMapper.toResponseDTOList(tagRepository.findAll());
+    public Page<TagResponseDTO> getAllTags(Pageable pageable) {
+        return tagRepository.findAll(pageable)
+                .map(tagMapper::toResponseDTO);
     }
 
     public TagResponseDTO getTagById(String id) {
@@ -62,14 +65,13 @@ public class TagService {
 
     // --- Join queries ---
 
-    public List<ContentResponseDTO> getContentsByTagName(String tagName) {
+    public Page<ContentResponseDTO> getContentsByTagName(String tagName, Pageable pageable) {
         Tags tag = tagRepository.findByTagName(tagName);
         if (tag == null) {
             throw new ResourceNotFoundException("Tag not found with name: " + tagName);
         }
-        return contentMapper.toListResponseDTOList(
-            tagRepository.findContentsByTagName(tagName)
-        );
+        return tagRepository.findContentsByTagName(tagName, pageable)
+                .map(contentMapper::toListResponseDTO);
     }
 
     public List<TagResponseDTO> getTagsByContentId(String contentId) {

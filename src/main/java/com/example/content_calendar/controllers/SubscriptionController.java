@@ -1,7 +1,9 @@
 package com.example.content_calendar.controllers;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -36,16 +38,20 @@ public class SubscriptionController {
         return ResponseEntity.noContent().build();
     }
 
-    // GET /api/subscriptions/users/{userId}
+    // GET /api/subscriptions/users/{userId}?page=0&size=10&sort=subscribedAt,desc
     @GetMapping("/users/{userId}")
-    public ResponseEntity<List<SubscriptionResponseDTO>> getSubscriptions(@PathVariable String userId) {
-        return ResponseEntity.ok(subscriptionService.getSubscriptions(userId));
+    public ResponseEntity<Page<SubscriptionResponseDTO>> getSubscriptions(
+            @PathVariable String userId,
+            @PageableDefault(size = 10, sort = "subscribedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(subscriptionService.getSubscriptions(userId, pageable));
     }
 
-    // GET /api/subscriptions/authors/{authorId}
+    // GET /api/subscriptions/authors/{authorId}?page=0&size=10&sort=subscribedAt,desc
     @GetMapping("/authors/{authorId}")
-    public ResponseEntity<List<SubscriptionResponseDTO>> getSubscribers(@PathVariable String authorId) {
-        return ResponseEntity.ok(subscriptionService.getSubscribers(authorId));
+    public ResponseEntity<Page<SubscriptionResponseDTO>> getSubscribers(
+            @PathVariable String authorId,
+            @PageableDefault(size = 10, sort = "subscribedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(subscriptionService.getSubscribers(authorId, pageable));
     }
 
     // GET /api/subscriptions/users/{userId}/authors/{authorId}/status
@@ -55,9 +61,11 @@ public class SubscriptionController {
         return ResponseEntity.ok(subscriptionService.isSubscribed(userId, authorId));
     }
 
-    // GET /api/subscriptions/users/{userId}/feed
+    // GET /api/subscriptions/users/{userId}/feed?page=0&size=10
     @GetMapping("/users/{userId}/feed")
-    public ResponseEntity<List<ContentResponseDTO>> getFeed(@PathVariable String userId) {
-        return ResponseEntity.ok(subscriptionService.getFeed(userId));
+    public ResponseEntity<Page<ContentResponseDTO>> getFeed(
+            @PathVariable String userId,
+            @PageableDefault(size = 10, sort = "publishedDate", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(subscriptionService.getFeed(userId, pageable));
     }
 }

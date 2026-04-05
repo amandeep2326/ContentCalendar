@@ -2,6 +2,8 @@ package com.example.content_calendar.repository;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,5 +21,5 @@ public interface TagRepository extends JpaRepository<Tags, String> {
 
     // JOIN: Find all content for a given tag name
     @Query("SELECT c FROM Content c JOIN c.tags t WHERE t.tagName = :tagName")
-    List<Content> findContentsByTagName(@Param("tagName") String tagName);
+    Page<Content> findContentsByTagName(@Param("tagName") String tagName, Pageable pageable);
 }

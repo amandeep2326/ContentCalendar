@@ -5,6 +5,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,25 +85,23 @@ public class SubscriptionService {
     // --- Get all subscriptions for a user ---
 
     @Transactional(readOnly = true)
-    public List<SubscriptionResponseDTO> getSubscriptions(String userId) {
+    public Page<SubscriptionResponseDTO> getSubscriptions(String userId, Pageable pageable) {
         userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
-        return subscriptionRepository.findByUserIdWithAuthor(userId).stream()
-                .map(this::toResponseDTO)
-                .toList();
+        return subscriptionRepository.findByUserIdWithAuthor(userId, pageable)
+                .map(this::toResponseDTO);
     }
 
     // --- Get all subscribers of an author ---
 
     @Transactional(readOnly = true)
-    public List<SubscriptionResponseDTO> getSubscribers(String authorId) {
+    public Page<SubscriptionResponseDTO> getSubscribers(String authorId, Pageable pageable) {
         authorRepository.findById(authorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Author not found with id: " + authorId));
 
-        return subscriptionRepository.findByAuthorIdWithUser(authorId).stream()
-                .map(this::toResponseDTO)
-                .toList();
+        return subscriptionRepository.findByAuthorIdWithUser(authorId, pageable)
+                .map(this::toResponseDTO);
     }
 
     // --- Check if subscribed ---
@@ -114,23 +114,20 @@ public class SubscriptionService {
     // --- Feed: content from subscribed authors ---
 
     @Transactional(readOnly = true)
-    public List<ContentResponseDTO> getFeed(String userId) {
+    public Page<ContentResponseDTO> getFeed(String userId, Pageable pageable) {
         userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
-        List<String> authorIds = subscriptionRepository.findByUserIdWithAuthor(userId).stream()
+        List<String> authorIds = subscriptionRepository.findByUserId(userId).stream()
                 .map(s -> s.getAuthor().getId())
                 .toList();
 
         if (authorIds.isEmpty()) {
-            return List.of();
+            return Page.empty(pageable);
         }
 
-        List<Content> feed = authorIds.stream()
-                .flatMap(id -> contentRepository.findByAuthorId(id).stream())
-                .toList();
-
-        return contentMapper.toListResponseDTOList(feed);
+        return contentRepository.findByAuthorIds(authorIds, pageable)
+                .map(contentMapper::toListResponseDTO);
     }
 
     // --- Helper ---

@@ -2,6 +2,10 @@ package com.example.content_calendar.controllers;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -35,9 +39,11 @@ public class AuthorController {
 
     // --- CRUD ---
 
+    // GET /api/authors?page=0&size=10&sort=name,asc
     @GetMapping("")
-    public ResponseEntity<List<AuthorResponseDTO>> getAllAuthors() {
-        return ResponseEntity.ok(authorService.getAllAuthors());
+    public ResponseEntity<Page<AuthorResponseDTO>> getAllAuthors(
+            @PageableDefault(size = 10, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
+        return ResponseEntity.ok(authorService.getAllAuthors(pageable));
     }
 
     @GetMapping("/{id}")
@@ -63,9 +69,12 @@ public class AuthorController {
 
     // --- Join queries ---
 
+    // GET /api/authors/{authorId}/content?page=0&size=10
     @GetMapping("/{authorId}/content")
-    public ResponseEntity<List<ContentResponseDTO>> getContentByAuthorId(@PathVariable String authorId) {
-        return ResponseEntity.ok(authorService.getContentByAuthorId(authorId));
+    public ResponseEntity<Page<ContentResponseDTO>> getContentByAuthorId(
+            @PathVariable String authorId,
+            @PageableDefault(size = 10, sort = "publishedDate", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(authorService.getContentByAuthorId(authorId, pageable));
     }
 
     @GetMapping("/{authorId}/tags")

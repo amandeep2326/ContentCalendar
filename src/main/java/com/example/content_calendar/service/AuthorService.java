@@ -2,6 +2,8 @@ package com.example.content_calendar.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.example.content_calendar.DTO.author.AuthorRequestDTO;
@@ -36,8 +38,9 @@ public class AuthorService {
 
     // --- CRUD ---
 
-    public List<AuthorResponseDTO> getAllAuthors() {
-        return authorMapper.toResponseDTOList(authorRepository.findAll());
+    public Page<AuthorResponseDTO> getAllAuthors(Pageable pageable) {
+        return authorRepository.findAll(pageable)
+                .map(authorMapper::toResponseDTO);
     }
 
     public AuthorResponseDTO getAuthorById(String id) {
@@ -69,10 +72,11 @@ public class AuthorService {
 
     // --- Join query methods ---
 
-    public List<ContentResponseDTO> getContentByAuthorId(String authorId) {
+    public Page<ContentResponseDTO> getContentByAuthorId(String authorId, Pageable pageable) {
         authorRepository.findById(authorId)
             .orElseThrow(() -> new ResourceNotFoundException("Author not found with id: " + authorId));
-        return contentMapper.toListResponseDTOList(authorRepository.findContentByAuthorId(authorId));
+        return authorRepository.findContentByAuthorId(authorId, pageable)
+                .map(contentMapper::toListResponseDTO);
     }
 
     public List<TagResponseDTO> getTagsByAuthorId(String authorId) {

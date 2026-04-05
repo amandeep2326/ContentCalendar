@@ -1,7 +1,9 @@
 package com.example.content_calendar.controllers;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -34,9 +36,11 @@ public class TagController {
 
     // --- CRUD ---
 
+    // GET /api/tags?page=0&size=10&sort=tagName,asc
     @GetMapping("")
-    public ResponseEntity<List<TagResponseDTO>> getAllTags() {
-        return ResponseEntity.ok(tagService.getAllTags());
+    public ResponseEntity<Page<TagResponseDTO>> getAllTags(
+            @PageableDefault(size = 10, sort = "tagName", direction = Sort.Direction.ASC) Pageable pageable) {
+        return ResponseEntity.ok(tagService.getAllTags(pageable));
     }
 
     @GetMapping("/{id}")
@@ -62,8 +66,11 @@ public class TagController {
 
     // --- Join queries ---
 
+    // GET /api/tags/contents/{tagName}?page=0&size=10
     @GetMapping("/contents/{tagName}")
-    public ResponseEntity<List<ContentResponseDTO>> getContentsByTag(@PathVariable String tagName) {
-        return ResponseEntity.ok(tagService.getContentsByTagName(tagName));
+    public ResponseEntity<Page<ContentResponseDTO>> getContentsByTag(
+            @PathVariable String tagName,
+            @PageableDefault(size = 10, sort = "publishedDate", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(tagService.getContentsByTagName(tagName, pageable));
     }
 }
