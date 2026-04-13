@@ -2,6 +2,8 @@ package com.example.content_calendar.service;
 
 import java.util.List;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -43,12 +45,14 @@ public class AuthorService {
                 .map(authorMapper::toResponseDTO);
     }
 
+    @Cacheable(value = "author", key = "#id")
     public AuthorResponseDTO getAuthorById(String id) {
         Author author = authorRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Author not found with id: " + id));
         return authorMapper.toResponseDTO(author);
     }
 
+    @CacheEvict(value = "author", allEntries = true)
     public AuthorResponseDTO createAuthor(AuthorRequestDTO dto) {
         if (dto.getName() == null || dto.getName().isBlank()) {
             throw new BadRequestException("Author name is required");
@@ -57,6 +61,7 @@ public class AuthorService {
         return authorMapper.toResponseDTO(authorRepository.save(author));
     }
 
+    @CacheEvict(value = "author", key = "#id")
     public AuthorResponseDTO updateAuthor(String id, AuthorRequestDTO dto) {
         Author author = authorRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Author not found with id: " + id));
@@ -64,6 +69,7 @@ public class AuthorService {
         return authorMapper.toResponseDTO(authorRepository.save(author));
     }
 
+    @CacheEvict(value = "author", key = "#id")
     public void deleteAuthor(String id) {
         Author author = authorRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Author not found with id: " + id));

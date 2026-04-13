@@ -5,6 +5,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -69,6 +72,7 @@ public class ContentService {
     }
 
     // Single content by id — checks premium access
+    @Cacheable(value = "content", key = "#id + '_' + #userId")
     public ContentResponseDTO getContentById(String id, String userId) {
         Content content = contentRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Content not found with id: " + id));
@@ -91,6 +95,7 @@ public class ContentService {
         return contentMapper.toResponseDTO(content);
     }
 
+    @CacheEvict(value = {"content", "contentByAuthor"}, allEntries = true)
     public ContentResponseDTO save(ContentRequestDTO dto) {
         if (dto.getTitle() == null || dto.getTitle().isEmpty()) {
             throw new BadRequestException("Title is required");
@@ -103,6 +108,7 @@ public class ContentService {
         return contentMapper.toResponseDTO(contentRepository.save(content));
     }
 
+    @CacheEvict(value = {"content", "contentByAuthor"}, allEntries = true)
     public ContentResponseDTO update(String id, ContentRequestDTO dto) {
         Content content = contentRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Content not found with id: " + id));
@@ -114,6 +120,7 @@ public class ContentService {
         return contentMapper.toResponseDTO(contentRepository.save(content));
     }
 
+    @CacheEvict(value = {"content", "contentByAuthor"}, allEntries = true)
     public void delete(String id) {
         Content content = contentRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Content not found with id: " + id));
@@ -152,6 +159,7 @@ public class ContentService {
                 .map(contentMapper::toResponseDTO);
     }
 
+    @Cacheable(value = "contentByAuthor", key = "#authorId + '_' + #userId + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
     public Page<ContentResponseDTO> getContentsByAuthorId(String authorId, String userId, Pageable pageable) {
         boolean includePremium = false;
         if (userId != null) {

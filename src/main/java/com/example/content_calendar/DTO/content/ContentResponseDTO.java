@@ -1,5 +1,6 @@
 package com.example.content_calendar.DTO.content;
 
+import java.io.Serializable;
 import java.util.Set;
 
 import com.example.content_calendar.model.Status;
@@ -11,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ContentResponseDTO {
+public class ContentResponseDTO implements Serializable {
     private String id;
     private String title;
     private String description;

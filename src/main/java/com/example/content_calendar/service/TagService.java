@@ -2,6 +2,8 @@ package com.example.content_calendar.service;
 
 import java.util.List;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -31,17 +33,20 @@ public class TagService {
 
     // --- CRUD ---
 
+    @Cacheable(value = "tags", key = "#pageable.pageNumber + '_' + #pageable.pageSize")
     public Page<TagResponseDTO> getAllTags(Pageable pageable) {
         return tagRepository.findAll(pageable)
                 .map(tagMapper::toResponseDTO);
     }
 
+    @Cacheable(value = "tag", key = "#id")
     public TagResponseDTO getTagById(String id) {
         Tags tag = tagRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Tag not found with id: " + id));
         return tagMapper.toResponseDTO(tag);
     }
 
+    @CacheEvict(value = {"tags", "tag"}, allEntries = true)
     public TagResponseDTO createTag(TagRequestDTO dto) {
         if (dto.getTagName() == null || dto.getTagName().isBlank()) {
             throw new BadRequestException("Tag name is required");
@@ -50,6 +55,7 @@ public class TagService {
         return tagMapper.toResponseDTO(tagRepository.save(tag));
     }
 
+    @CacheEvict(value = {"tags", "tag"}, allEntries = true)
     public TagResponseDTO updateTag(String id, TagRequestDTO dto) {
         Tags tag = tagRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Tag not found with id: " + id));
@@ -57,6 +63,7 @@ public class TagService {
         return tagMapper.toResponseDTO(tagRepository.save(tag));
     }
 
+    @CacheEvict(value = {"tags", "tag"}, allEntries = true)
     public void deleteTag(String id) {
         Tags tag = tagRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Tag not found with id: " + id));
