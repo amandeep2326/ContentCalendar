@@ -2,7 +2,6 @@ package com.example.content_calendar.service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -14,10 +13,7 @@ import com.example.content_calendar.DTO.content.ContentResponseDTO;
 import com.example.content_calendar.DTO.subscription.SubscriptionResponseDTO;
 import com.example.content_calendar.ExceptionHandler.ResourceNotFoundException;
 import com.example.content_calendar.mapper.ContentMapper;
-import com.example.content_calendar.model.Author;
-import com.example.content_calendar.model.Content;
 import com.example.content_calendar.model.Subscription;
-import com.example.content_calendar.model.User;
 import com.example.content_calendar.repository.AuthorRepository;
 import com.example.content_calendar.repository.ContentCollectionRepository;
 import com.example.content_calendar.repository.SubscriptionRepository;
@@ -50,10 +46,12 @@ public class SubscriptionService {
 
     @Transactional
     public SubscriptionResponseDTO subscribe(String userId, String authorId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-        Author author = authorRepository.findById(authorId)
-                .orElseThrow(() -> new ResourceNotFoundException("Author not found with id: " + authorId));
+        if (!userRepository.existsById(userId)) {
+            throw new ResourceNotFoundException("User not found with id: " + userId);
+        }
+        if (!authorRepository.existsById(authorId)) {
+            throw new ResourceNotFoundException("Author not found with id: " + authorId);
+        }
 
         // Idempotent: return existing subscription if already present
         Optional<Subscription> existing = subscriptionRepository.findByUserIdAndAuthorId(userId, authorId);
@@ -62,8 +60,8 @@ public class SubscriptionService {
         }
 
         Subscription subscription = new Subscription();
-        subscription.setUser(user);
-        subscription.setAuthor(author);
+        subscription.setUser(userRepository.getReferenceById(userId));
+        subscription.setAuthor(authorRepository.getReferenceById(authorId));
         subscription.setSubscribedAt(LocalDateTime.now());
 
         return toResponseDTO(subscriptionRepository.save(subscription));
@@ -73,10 +71,12 @@ public class SubscriptionService {
 
     @Transactional
     public void unsubscribe(String userId, String authorId) {
-        userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-        authorRepository.findById(authorId)
-                .orElseThrow(() -> new ResourceNotFoundException("Author not found with id: " + authorId));
+        if (!userRepository.existsById(userId)) {
+            throw new ResourceNotFoundException("User not found with id: " + userId);
+        }
+        if (!authorRepository.existsById(authorId)) {
+            throw new ResourceNotFoundException("Author not found with id: " + authorId);
+        }
 
         // Idempotent: no-op if not subscribed
         subscriptionRepository.deleteByUserIdAndAuthorId(userId, authorId);
@@ -86,8 +86,9 @@ public class SubscriptionService {
 
     @Transactional(readOnly = true)
     public Page<SubscriptionResponseDTO> getSubscriptions(String userId, Pageable pageable) {
-        userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+        if (!userRepository.existsById(userId)) {
+            throw new ResourceNotFoundException("User not found with id: " + userId);
+        }
 
         return subscriptionRepository.findByUserIdWithAuthor(userId, pageable)
                 .map(this::toResponseDTO);
@@ -97,8 +98,9 @@ public class SubscriptionService {
 
     @Transactional(readOnly = true)
     public Page<SubscriptionResponseDTO> getSubscribers(String authorId, Pageable pageable) {
-        authorRepository.findById(authorId)
-                .orElseThrow(() -> new ResourceNotFoundException("Author not found with id: " + authorId));
+        if (!authorRepository.existsById(authorId)) {
+            throw new ResourceNotFoundException("Author not found with id: " + authorId);
+        }
 
         return subscriptionRepository.findByAuthorIdWithUser(authorId, pageable)
                 .map(this::toResponseDTO);
@@ -115,18 +117,11 @@ public class SubscriptionService {
 
     @Transactional(readOnly = true)
     public Page<ContentResponseDTO> getFeed(String userId, Pageable pageable) {
-        userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-
-        List<String> authorIds = subscriptionRepository.findByUserId(userId).stream()
-                .map(s -> s.getAuthor().getId())
-                .toList();
-
-        if (authorIds.isEmpty()) {
-            return Page.empty(pageable);
+        if (!userRepository.existsById(userId)) {
+            throw new ResourceNotFoundException("User not found with id: " + userId);
         }
 
-        return contentRepository.findByAuthorIds(authorIds, pageable)
+        return contentRepository.findFeedByUserId(userId, pageable)
                 .map(contentMapper::toListResponseDTO);
     }
 

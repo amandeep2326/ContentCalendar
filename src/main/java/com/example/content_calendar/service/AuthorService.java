@@ -1,7 +1,5 @@
 package com.example.content_calendar.service;
 
-import java.util.List;
-
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -79,15 +77,18 @@ public class AuthorService {
     // --- Join query methods ---
 
     public Page<ContentResponseDTO> getContentByAuthorId(String authorId, Pageable pageable) {
-        authorRepository.findById(authorId)
-            .orElseThrow(() -> new ResourceNotFoundException("Author not found with id: " + authorId));
+        if (!authorRepository.existsById(authorId)) {
+            throw new ResourceNotFoundException("Author not found with id: " + authorId);
+        }
         return authorRepository.findContentByAuthorId(authorId, pageable)
                 .map(contentMapper::toListResponseDTO);
     }
 
-    public List<TagResponseDTO> getTagsByAuthorId(String authorId) {
-        authorRepository.findById(authorId)
-            .orElseThrow(() -> new ResourceNotFoundException("Author not found with id: " + authorId));
-        return tagMapper.toResponseDTOList(authorRepository.findTagsByAuthorId(authorId));
+    public Page<TagResponseDTO> getTagsByAuthorId(String authorId, Pageable pageable) {
+        if (!authorRepository.existsById(authorId)) {
+            throw new ResourceNotFoundException("Author not found with id: " + authorId);
+        }
+        return authorRepository.findTagsByAuthorId(authorId, pageable)
+                .map(tagMapper::toResponseDTO);
     }
 }

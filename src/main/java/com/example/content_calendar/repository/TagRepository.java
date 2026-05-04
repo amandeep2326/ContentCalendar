@@ -19,7 +19,7 @@ public interface TagRepository extends JpaRepository<Tags, String> {
     @Query("SELECT t FROM Tags t JOIN t.contents c WHERE c.id = :contentId")
     List<Tags> findTagsByContentId(@Param("contentId") String contentId);
 
-    // JOIN: Find all content for a given tag name
-    @Query("SELECT c FROM Content c JOIN c.tags t WHERE t.tagName = :tagName")
+    // EXISTS: Find all content for a given tag name (avoids row multiplication from JOIN)
+    @Query("SELECT c FROM Content c WHERE EXISTS (SELECT 1 FROM c.tags t WHERE t.tagName = :tagName)")
     Page<Content> findContentsByTagName(@Param("tagName") String tagName, Pageable pageable);
 }

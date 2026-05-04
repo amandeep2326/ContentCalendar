@@ -9,6 +9,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -21,7 +22,6 @@ import com.example.content_calendar.model.Content;
 import com.example.content_calendar.model.Status;
 import com.example.content_calendar.model.Tags;
 import com.example.content_calendar.model.Type;
-import com.example.content_calendar.model.User;
 import com.example.content_calendar.repository.*;
 
 @Service
@@ -55,20 +55,11 @@ public class ContentService {
 
     // Returns free content + premium content from subscribed authors (for authenticated users)
     public Page<ContentResponseDTO> getContentsForUser(String userId, Pageable pageable) {
-        userRepository.findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-
-        List<String> subscribedAuthorIds = subscriptionRepository.findByUserId(userId).stream()
-            .map(s -> s.getAuthor().getId())
-            .toList();
-
-        Page<Content> contents;
-        if (subscribedAuthorIds.isEmpty()) {
-            contents = contentRepository.findByPremiumFalse(pageable);
-        } else {
-            contents = contentRepository.findAccessibleContent(subscribedAuthorIds, pageable);
+        if (!userRepository.existsById(userId)) {
+            throw new ResourceNotFoundException("User not found with id: " + userId);
         }
-        return contents.map(contentMapper::toListResponseDTO);
+        return contentRepository.findAccessibleContentForUser(userId, pageable)
+                .map(contentMapper::toListResponseDTO);
     }
 
     // Single content by id — checks premium access
@@ -81,8 +72,9 @@ public class ContentService {
             if (userId == null) {
                 throw new BadRequestException("This is premium content. Please login and subscribe to the author to view it.");
             }
-            User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            if (!userRepository.existsById(userId)) {
+                throw new ResourceNotFoundException("User not found");
+            }
 
             boolean isSubscribed = subscriptionRepository.existsByUserIdAndAuthorId(
                 userId, content.getAuthor().getId());
@@ -155,8 +147,17 @@ public class ContentService {
     }
 
     public Page<ContentResponseDTO> getAllWithAuthorAndTags(Pageable pageable) {
-        return contentRepository.findAllWithAuthorAndTags(pageable)
-                .map(contentMapper::toResponseDTO);
+        // Phase 1: Get paginated IDs (SQL LIMIT/OFFSET works correctly on IDs)
+        Page<String> idPage = contentRepository.findAllContentIds(pageable);
+        if (idPage.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        // Phase 2: Fetch full entities with author & tags for only this page of IDs
+        List<Content> contents = contentRepository.findAllWithAuthorAndTagsByIds(idPage.getContent());
+        List<ContentResponseDTO> dtos = contents.stream()
+                .map(contentMapper::toResponseDTO)
+                .toList();
+        return new PageImpl<>(dtos, pageable, idPage.getTotalElements());
     }
 
     @Cacheable(value = "contentByAuthor", key = "#authorId + '_' + #userId + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")

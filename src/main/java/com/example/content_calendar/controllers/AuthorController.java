@@ -1,7 +1,5 @@
 package com.example.content_calendar.controllers;
 
-import java.util.List;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -78,7 +76,9 @@ public class AuthorController {
     }
 
     @GetMapping("/{authorId}/tags")
-    public ResponseEntity<List<TagResponseDTO>> getTagsByAuthorId(@PathVariable String authorId) {
-        return ResponseEntity.ok(authorService.getTagsByAuthorId(authorId));
+    public ResponseEntity<Page<TagResponseDTO>> getTagsByAuthorId(
+            @PathVariable String authorId,
+            @PageableDefault(size = 20, sort = "tagName", direction = Sort.Direction.ASC) Pageable pageable) {
+        return ResponseEntity.ok(authorService.getTagsByAuthorId(authorId, pageable));
     }
 }

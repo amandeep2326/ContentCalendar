@@ -1,6 +1,5 @@
 package com.example.content_calendar.repository;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -16,10 +15,6 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Stri
     Optional<Subscription> findByUserIdAndAuthorId(String userId, String authorId);
 
     boolean existsByUserIdAndAuthorId(String userId, String authorId);
-
-    List<Subscription> findByUserId(String userId);
-
-    List<Subscription> findByAuthorId(String authorId);
 
     void deleteByUserIdAndAuthorId(String userId, String authorId);
 

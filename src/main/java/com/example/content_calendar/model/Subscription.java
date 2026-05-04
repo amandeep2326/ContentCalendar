@@ -13,7 +13,10 @@ import lombok.NoArgsConstructor;
     uniqueConstraints = @UniqueConstraint(
         name = "uk_subscription_user_author",
         columnNames = {"user_id", "author_id"}
-    )
+    ),
+    indexes = {
+        @Index(name = "idx_subscription_author_id", columnList = "author_id")
+    }
 )
 @Data
 @NoArgsConstructor

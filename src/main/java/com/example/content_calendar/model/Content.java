@@ -11,7 +11,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "content")
+@Table(name = "content", indexes = {
+    @Index(name = "idx_content_author_id", columnList = "author_id"),
+    @Index(name = "idx_content_status", columnList = "status"),
+    @Index(name = "idx_content_premium", columnList = "premium"),
+    @Index(name = "idx_content_published_date", columnList = "publishedDate")
+})
 public class Content {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
